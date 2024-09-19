@@ -702,15 +702,24 @@ def clean_level_save(server_file):
         return
     def run_fix_world_cmd():
         log("Running fix_world.cmd, please wait...")
+        process = None
         try:
             process = subprocess.Popen([fix_save, temp_level_save_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 process.communicate(timeout=300)
             except subprocess.TimeoutExpired:
                 log("fix_world.cmd timed out. Terminating...")
-                process.kill()
-                process.communicate()
-            log("Fix_world.cmd has completed the task...")
+                try:
+                    process.kill()
+                except Exception as kill_error:
+                    log(f"Error terminating process: {kill_error}")
+                try:
+                    process.communicate()
+                except Exception as comm_error:
+                    log(f"Error communicating with process after kill: {comm_error}")
+                log("fix_world.cmd terminated due to timeout.")
+            else:
+                log("Fix_world.cmd has completed the task...")
         except Exception as e:
             log(f"Error running fix_world.cmd: {e}")
         finally:
