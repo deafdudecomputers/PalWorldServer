@@ -645,45 +645,82 @@ def clean_level_save(server_file):
         if os.path.exists(lock_file_path):
             os.remove(lock_file_path)
         return    
-    if os.path.exists(lock_file_path):
-        return
-    if os.path.exists(status_file_path):
+    if os.path.exists(lock_file_path) or os.path.exists(status_file_path):
         return
     server_folder_name = get_server_folder_name(server_file, log)
     if not server_folder_name:
         log("DedicatedServerName not found!")
-        return    
+        return       
     level_save_search_path = os.path.join(saved_folder, "SaveGames", "0", server_folder_name, "Level.sav")
-    players_folder_search_path = os.path.join(saved_folder, "SaveGames", "0", server_folder_name, "Players")
+    players_folder_search_path = os.path.join(saved_folder, "SaveGames", "0", server_folder_name, "Players")    
     if not os.path.exists(level_save_search_path):
-        return    
+        log("Level.sav not found, skipping the task.")
+        return
+    try:
+        with open(level_save_search_path, 'r+'):
+            log("Level.sav is able to be used, processing with fix_world.cmd...")
+    except IOError as e:
+        log(f"Level.sav is currently in use or inaccessible: {e}")
+        return
     fix_save = os.path.join(save_tools_folder, "fix_world.cmd")
     if not os.path.exists(fix_save):
+        log("fix_world.cmd not found. Aborting...")
         return
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".sav") as temp_file:
-        temp_level_save_path = temp_file.name
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".sav") as temp_file:
+            temp_level_save_path = temp_file.name
         shutil.copy(level_save_search_path, temp_level_save_path)
-    players_folder_destination_path = os.path.join(save_tools_folder, "Players")
-    if os.path.exists(players_folder_search_path):
-        if os.path.exists(players_folder_destination_path):
-            shutil.rmtree(players_folder_destination_path)
-        shutil.copytree(players_folder_search_path, players_folder_destination_path)
-    with open(status_file_path, 'w') as status_file:
-        status_file.write("Running")
-    with open(lock_file_path, 'w') as lock_file:
-        lock_file.write("Locked")
+        if not os.path.exists(temp_level_save_path):
+            log("Failed to create a temporary Level.sav copy. Aborting...")
+            return
+        log(f"Temporary Level.sav copy is available at {temp_level_save_path}")
+    except Exception as e:
+        log(f"Error creating or copying Level.sav: {e}")
+        return
+    try:
+        players_folder_destination_path = os.path.join(save_tools_folder, "Players")
+        if os.path.exists(players_folder_search_path):
+            if os.path.exists(players_folder_destination_path):
+                shutil.rmtree(players_folder_destination_path)
+            shutil.copytree(players_folder_search_path, players_folder_destination_path)
+            if not os.path.exists(players_folder_destination_path):
+                log("Failed to copy the Players folder. Aborting...")
+                return
+            log(f"Players folder copied successfully to {players_folder_destination_path}")
+        else:
+            log("Players folder not found. Proceeding without Players data...")
+    except Exception as e:
+        log(f"Error copying Players folder: {e}")
+        return
+    try:
+        with open(status_file_path, 'w') as status_file:
+            status_file.write("Running")
+        with open(lock_file_path, 'w') as lock_file:
+            lock_file.write("Locked")
+    except Exception as e:
+        log(f"Error writing status or lock files: {e}")
+        return
     def run_fix_world_cmd():
         log("Running fix_world.cmd, please wait...")
-        process = subprocess.Popen([fix_save, temp_level_save_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.communicate()
-        if os.path.exists(status_file_path):
-            os.remove(status_file_path)
-        log("Fix_world.cmd has completed the task...")
-        set_console_title(batch_title)
-        handle_fixed_files()
-        if os.path.exists(temp_level_save_path):
-            os.remove(temp_level_save_path)
-        return process.returncode
+        try:
+            process = subprocess.Popen([fix_save, temp_level_save_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                process.communicate(timeout=300)
+            except subprocess.TimeoutExpired:
+                log("fix_world.cmd timed out. Terminating...")
+                process.kill()
+                process.communicate()
+            log("Fix_world.cmd has completed the task...")
+        except Exception as e:
+            log(f"Error running fix_world.cmd: {e}")
+        finally:
+            if os.path.exists(status_file_path):
+                os.remove(status_file_path)
+            if os.path.exists(temp_level_save_path):
+                os.remove(temp_level_save_path)
+            log("Temporary files cleaned up.")
+            set_console_title(batch_title)
+            handle_fixed_files()
     thread = threading.Thread(target=run_fix_world_cmd)
     thread.start()
 def get_server_folder_name(server_file, log):
