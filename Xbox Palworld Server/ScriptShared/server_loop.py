@@ -667,15 +667,14 @@ def clean_level_save(server_file):
         log("fix_world.cmd not found. Aborting...")
         return
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".sav") as temp_file:
-            temp_level_save_path = temp_file.name
+        temp_level_save_path = os.path.join(save_tools_folder, "Level.sav")
         shutil.copy(level_save_search_path, temp_level_save_path)
         if not os.path.exists(temp_level_save_path):
-            log("Failed to create a temporary Level.sav copy. Aborting...")
+            log("Failed to copy Level.sav to save_tools_folder. Aborting...")
             return
-        log(f"Temporary Level.sav copy is available at {temp_level_save_path}")
+        log(f"Level.sav copied successfully to {temp_level_save_path}")
     except Exception as e:
-        log(f"Error creating or copying Level.sav: {e}")
+        log(f"Error copying Level.sav: {e}")
         return
     try:
         players_folder_destination_path = os.path.join(save_tools_folder, "Players")
@@ -727,6 +726,8 @@ def clean_level_save(server_file):
                 os.remove(status_file_path)
             if os.path.exists(temp_level_save_path):
                 os.remove(temp_level_save_path)
+            if os.path.exists(players_folder_destination_path):
+                shutil.rmtree(players_folder_destination_path)
             log("Temporary files cleaned up.")
             set_console_title(batch_title)
             handle_fixed_files()
