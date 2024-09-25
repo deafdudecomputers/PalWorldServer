@@ -11,6 +11,7 @@ If you have any requests or issues to report, you can contact me on Discord.
 - Auto-delete backups after 30 days.
 - Auto crash/offline restart.
 - Configurable options such as: Palguard, mods, Palworld settings, engine, etc.
+- Auto-copy each update into Server_Updates folder. If you need to rollback, just in case.
 
 ---
 
