@@ -29,8 +29,8 @@ def setup_server():
         download_and_extract_files(server_files_url, palserver_folder)
         extract_steamcmd()
         update_server()
-        #update_server_manifest() #Do NOT use this, unless you're using xbox platform and needs to "rollback" to latest working xbox update - in which case, you need to update the last "" in command in server_loop.py.
-        #update_server_forced() #Remove the '#' at front of update_server_forced() if my method of detecting update isn't working.
+        #update_server_manifest("2630252523734859869") #As of 9/16/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
+        #update_server_forced()
         install_mods()
         install_server_tweaks()
         copy_config_section(default_config_file, config_file, '[/Script/Pal.PalGameWorldSettings]')

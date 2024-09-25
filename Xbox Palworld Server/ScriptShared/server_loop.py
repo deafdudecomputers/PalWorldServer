@@ -554,7 +554,7 @@ def move_depot_files():
                 shutil.copy2(s, d)    
     else:
         log("Depot files not found. Check the depot download path.")
-def update_server_manifest():
+def update_server_manifest(manifest):
     if not os.path.exists(palserver_folder):
         os.makedirs(palserver_folder)    
     log("Checking server update...")
@@ -562,7 +562,7 @@ def update_server_manifest():
     log("Server update downloading, please wait...")    
     update_server_cmd = [
         steamcmd_path, "+login", "anonymous",
-        "+download_depot", "2394010", "2394011", "8960275775067797843", #As of 8/28/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
+        "+download_depot", "2394010", "2394011", manifest,
         "+quit"
     ]
     subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)    
