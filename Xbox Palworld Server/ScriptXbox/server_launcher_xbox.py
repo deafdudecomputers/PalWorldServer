@@ -29,7 +29,7 @@ def setup_server():
         download_and_extract_files(server_files_url, palserver_folder)
         extract_steamcmd()
         update_server()
-        update_server_manifest("2630252523734859869") #As of 9/16/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
+        #update_server_manifest("2630252523734859869") #As of 9/16/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
         #update_server_forced()
         install_mods()
         install_server_tweaks()
