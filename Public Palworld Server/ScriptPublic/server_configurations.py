@@ -69,6 +69,8 @@ def update_palguard_json():
         "announceConnections": True,
         "bannedMessage": "You've been banned.",
         "announcePunishments": True,
+        "disableIllegalItemProtection": False,
+        "doActionUponIllegalPalStats" : False,
         "whitelistMessage": f"You need to whitelist at {discord_server_link}."
     }
     if os.path.exists(palguard_json):
