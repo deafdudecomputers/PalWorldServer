@@ -25,8 +25,6 @@ To close the script and server at the same time, double-click the same `start_se
 - BetterResting (Lua)
 - ChatLogger (Lua)
 - Creative Menu (Lua/Pak)
-- NoExploits (Dll)
-- InfiniteLoadingFix (Dll)
 - SkillFruitShop (Pak)
 - RakLib (Pak)
 - RakLogistics (Pak/Lua) - MergeItems/InstantTransport/Ticks/BaseContainers
