@@ -37,6 +37,7 @@ def retrieve_server_status():
                 log("Server is down, skipping clean_level_save.")
             execute_rcon_command("reloadcfg")
             check_update()
+            force_restart()
         else:
             pass        
     except Exception as e:
@@ -375,8 +376,40 @@ def save_server(admin_password, server_address, server_restapi_port):
         else:
             pass
     except requests.RequestException as e:
-        pass        
+        pass
+def force_restart():
+    return
+    log("Server is restarting now...")
+    send_server_shutdown()
+    #send_server_shutdown_old()
+    restart_initiated = True
+    reset_announcements()
+    return
 def send_server_shutdown():
+    url = f"http://{server_address}:{server_restapi_port}/v1/api/shutdown"
+    username = 'admin'
+    password = admin_password
+    base64_auth_info = base64.b64encode(f"{username}:{password}".encode('ascii')).decode('ascii')
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': f'Basic {base64_auth_info}'
+    }
+    waittime = 1
+    shutdown_message = "Server will shut down now."
+    data = {
+        "waittime": waittime,
+        "message": shutdown_message
+    }    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=3)
+        if response.ok:
+            log("Server successfully shut down via REST API.")
+            send_server_announcement("Server successfully shut down.")
+        else:
+            log(f"Server shutdown failed with status code: {response.status_code}")
+    except requests.RequestException as e:
+        log(f"Server shutdown request failed: {e}")    
+def send_server_shutdown_old():
     for proc in psutil.process_iter(['pid', 'exe']):
         if proc.info['exe'] and target_path in proc.info['exe']:
             try:
@@ -392,7 +425,7 @@ def send_server_shutdown():
     if process_terminated:
         log("Server shutdown failed. Process still running.")
     else:
-        log("Server successfully shut down.")        
+        log("Server successfully shut down.")    
 def chat_logger(target_path):
     chatlog_file = os.path.join(target_path, "ChatLog.txt")
     last_line_file = os.path.join(target_path, "ChatLog_Last.txt")    
@@ -422,7 +455,7 @@ def start_server():
            f"-QueryPort={server_query_port}", 
            f"-publicip={public_ip}", 
            f"-port={server_port}", 
-           "-useperfthreads", 
+           "-useperfthreads",
            "-UseMultithreadForDS"]
     if is_public:
         cmd.append("-publiclobby")
