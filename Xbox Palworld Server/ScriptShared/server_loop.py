@@ -63,7 +63,7 @@ def delete_old_files():
         now = time.time()
         for file in os.listdir(backup_folder):
             file_path = os.path.join(backup_folder, file)
-            if os.stat(file_path).st_mtime < now - 30 * 86400:  # 30 days
+            if os.stat(file_path).st_mtime < now - 90 * 86400:  # 90 days
                 if os.path.isfile(file_path):
                     os.remove(file_path)
                     log(f"Deleted old file: {file_path}")
