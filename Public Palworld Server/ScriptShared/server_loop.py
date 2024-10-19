@@ -127,6 +127,7 @@ def check_existing_instances(batch_title, palserver_exes, target_path, script_na
         for pid in script_pids:
             if pid != current_pid:
                 try:
+                    #send_server_shutdown()
                     proc = psutil.Process(pid)
                     proc.terminate()
                     proc.wait()
@@ -134,9 +135,10 @@ def check_existing_instances(batch_title, palserver_exes, target_path, script_na
                     continue
     for pid in server_pids:
         try:
-            proc = psutil.Process(pid)
-            proc.terminate()
-            proc.wait()
+            send_server_shutdown()
+            #proc = psutil.Process(pid)
+            #proc.terminate()
+            #proc.wait()
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
     if len(script_pids) > 1 or server_pids:
