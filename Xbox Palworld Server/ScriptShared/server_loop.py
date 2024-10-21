@@ -382,8 +382,8 @@ def save_server(admin_password, server_address, server_restapi_port):
 def force_restart():
     return
     log("Server is restarting now...")
-    #send_server_shutdown()
-    send_server_shutdown_restapi()
+    send_server_shutdown()
+    #send_server_shutdown_restapi()
     #send_server_shutdown_rcon()
     restart_initiated = True
     reset_announcements()
@@ -413,7 +413,8 @@ def send_server_shutdown_restapi():
     except requests.RequestException as e:
         log(f"Server shutdown request failed: {e}")    
 def send_server_shutdown():
-    send_server_shutdown_restapi()
+    send_server_shutdown_rcon()
+    #send_server_shutdown_restapi()
     return
     for proc in psutil.process_iter(['pid', 'exe']):
         if proc.info['exe'] and target_path in proc.info['exe']:
