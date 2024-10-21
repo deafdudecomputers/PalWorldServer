@@ -382,8 +382,9 @@ def save_server(admin_password, server_address, server_restapi_port):
 def force_restart():
     return
     log("Server is restarting now...")
-    send_server_shutdown()
-    #send_server_shutdown_restapi()
+    #send_server_shutdown()
+    send_server_shutdown_restapi()
+    #send_server_shutdown_rcon()
     restart_initiated = True
     reset_announcements()
     return
@@ -404,14 +405,16 @@ def send_server_shutdown_restapi():
     }    
     try:
         response = requests.post(url, headers=headers, json=data, timeout=3)
+        log(f"REST API Response content: {response.text}")
         if response.ok:
             log("Server successfully shut down via REST API.")
-            send_server_announcement("Server successfully shut down.")
         else:
             log(f"Server shutdown failed with status code: {response.status_code}")
     except requests.RequestException as e:
         log(f"Server shutdown request failed: {e}")    
 def send_server_shutdown():
+    send_server_shutdown_restapi()
+    return
     for proc in psutil.process_iter(['pid', 'exe']):
         if proc.info['exe'] and target_path in proc.info['exe']:
             try:
@@ -428,6 +431,24 @@ def send_server_shutdown():
         log("Server shutdown failed. Process still running.")
     else:
         log("Server successfully shut down.")    
+def send_server_shutdown_rcon():
+    for proc in psutil.process_iter(['pid', 'exe']):
+        if proc.info['exe'] and target_path in proc.info['exe']:
+            try:
+                shutdown_seconds = 1 
+                shutdown_message = "Server will shutdown now."
+                execute_rcon_command(f"shutdown {shutdown_seconds} {shutdown_message}")
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+    process_terminated = False
+    for proc in psutil.process_iter(['pid', 'exe']):
+        if proc.info['exe'] and target_path in proc.info['exe']:
+            process_terminated = True
+            break    
+    if process_terminated:
+        log("Server shutdown failed. Process still running.")
+    else:
+        log("Server successfully shut down.") 
 def chat_logger(target_path):
     chatlog_file = os.path.join(target_path, "ChatLog.txt")
     last_line_file = os.path.join(target_path, "ChatLog_Last.txt")    
