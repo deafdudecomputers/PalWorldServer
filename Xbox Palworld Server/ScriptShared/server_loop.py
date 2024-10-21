@@ -135,10 +135,10 @@ def check_existing_instances(batch_title, palserver_exes, target_path, script_na
                     continue
     for pid in server_pids:
         try:
-            send_server_shutdown()
-            #proc = psutil.Process(pid)
-            #proc.terminate()
-            #proc.wait()
+            #send_server_shutdown()
+            proc = psutil.Process(pid)
+            proc.terminate()
+            proc.wait()
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
     if len(script_pids) > 1 or server_pids:
@@ -383,11 +383,11 @@ def force_restart():
     return
     log("Server is restarting now...")
     send_server_shutdown()
-    #send_server_shutdown_old()
+    #send_server_shutdown_restapi()
     restart_initiated = True
     reset_announcements()
     return
-def send_server_shutdown():
+def send_server_shutdown_restapi():
     url = f"http://{server_address}:{server_restapi_port}/v1/api/shutdown"
     username = 'admin'
     password = admin_password
@@ -411,7 +411,7 @@ def send_server_shutdown():
             log(f"Server shutdown failed with status code: {response.status_code}")
     except requests.RequestException as e:
         log(f"Server shutdown request failed: {e}")    
-def send_server_shutdown_old():
+def send_server_shutdown():
     for proc in psutil.process_iter(['pid', 'exe']):
         if proc.info['exe'] and target_path in proc.info['exe']:
             try:
