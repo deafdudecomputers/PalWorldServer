@@ -65,6 +65,7 @@ def monitor_server():
             log("Monitor server stopping...")
             break
         try:
+            update_heartbeat()
             if not is_process_running(palserver_exe, os.path.dirname(palserver_exe)):
                 log("Server has stopped. Restarting the server...")
                 setup_server()
