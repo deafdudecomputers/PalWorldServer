@@ -54,20 +54,23 @@ def setup_server():
         start_server()
         time.sleep(loop_time)
 heartbeat_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "monitor_heartbeat.txt")
-monitor_thread = None 
+monitor_thread = None
+monitor_stop_event = threading.Event() 
 def update_heartbeat():
     with open(heartbeat_file, "w") as f:
         f.write(str(time.time()))
 def monitor_server():
     while True:
+        if monitor_stop_event.is_set():
+            log("Monitor server stopping...")
+            break
         try:
-            update_heartbeat()
             if not is_process_running(palserver_exe, os.path.dirname(palserver_exe)):
                 log("Server has stopped. Restarting the server...")
                 setup_server()
             retrieve_server_status()
         except Exception as e:
-            log(f"Error in monitor_server: {e}")
+            log(f"Error in loop: {e}")
 def watchdog():
     global monitor_thread
     while True:
@@ -79,10 +82,17 @@ def watchdog():
                     log("Monitor server unresponsive. Restarting monitor...")
                     if monitor_thread and monitor_thread.is_alive():
                         log("Shutting down old monitor thread...")
+                        monitor_stop_event.set()
+                        monitor_thread.join()
+                        monitor_stop_event.clear()
                     monitor_thread = threading.Thread(target=monitor_server)
                     monitor_thread.start()
             else:
                 log("Heartbeat file missing. Starting monitor server...")
+                if monitor_thread and monitor_thread.is_alive():
+                    monitor_stop_event.set()
+                    monitor_thread.join()
+                    monitor_stop_event.clear()
                 monitor_thread = threading.Thread(target=monitor_server)
                 monitor_thread.start()
         except Exception as e:
