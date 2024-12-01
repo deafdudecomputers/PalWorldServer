@@ -103,6 +103,8 @@ def watchdog():
             log(f"Error in watchdog: {e}")
         time.sleep(10)
 def main():
+    if os.path.exists(heartbeat_file):
+        os.remove(heartbeat_file)
     initialize()
     setup_server()
     watchdog()
