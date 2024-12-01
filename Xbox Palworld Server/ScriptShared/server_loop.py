@@ -13,6 +13,8 @@ def retrieve_server_status():
         if server_info:
             global server_version
             server_version = server_info.get('version', '')
+            server_version = server_version.split('.')[0:3]
+            server_version = '.'.join(server_version)
             metrics_info = retrieve_info(f'http://{server_address}:{server_restapi_port}/v1/api/metrics', palserver_folder, 'metrics_info.json')
             if metrics_info:
                 current_players = metrics_info.get('currentplayernum', '')
