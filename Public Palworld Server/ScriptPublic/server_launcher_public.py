@@ -28,9 +28,12 @@ def setup_server():
         check_powershell()
         download_and_extract_files(server_files_url, palserver_folder)
         extract_steamcmd()
-        update_server()
-        #update_server_manifest("2791071972083794104") #As of 9/30/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
-        #update_server_forced()
+        if server_update_enable:
+            if server_update_manifest:
+                update_server_manifest("2791071972083794104")  #As of 11/30/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
+            else:
+                update_server()
+                #update_server_forced()
         install_mods()
         install_server_tweaks()
         copy_config_section(default_config_file, config_file, '[/Script/Pal.PalGameWorldSettings]')

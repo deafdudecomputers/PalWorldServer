@@ -52,6 +52,8 @@ palserver_exe_original = os.path.join(palserver_folder, "PalServer.exe") #Do NOT
 palserver_exe = palserver_exe_regular #Do NOT touch this, leave as is.
 palserver_exes = [palserver_exe_cmd, palserver_exe_regular, palserver_exe_original] #Do NOT touch this, leave as is.
 palguard_json = os.path.join(target_path, "palguard.json") #Do NOT touch this, leave as is.
+server_update_enable = 1 #Set to 1 if you want it to update, otherwise set to 0 if you want to disable the updates.
+server_update_manifest = 0 #Set to 1 if you want it to update to certain version(manifest), otherwise set to 0 if you want to disable the updates.
 def get_public_ip():
     response = requests.get("https://icanhazip.com")
     return response.text.strip()
