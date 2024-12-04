@@ -96,10 +96,10 @@ def retrieve_info(url, folder, file_name):
         pass
     return None   
 def get_process_id(executable_name):
-    for proc in psutil.process_iter(['pid', 'name']):
-        if proc.info['name'] == executable_name:
+    for proc in psutil.process_iter(['pid', 'name', 'exe']):
+        if proc.info['name'] == executable_name and proc.info['exe'] and target_path in proc.info['exe']:
             return proc.info['pid']
-    return None    
+    return None
 def check_existing_instances(batch_title, palserver_exes, target_path, script_names):
     current_pid = os.getpid()
     server_pids = []
@@ -476,6 +476,7 @@ def start_server():
     global server_query_port, server_port, server_address
     server_query_port = str(server_query_port)
     public_ip = ""
+    #public_ip = get_public_ip()
     server_port = str(server_port)
     cmd = [palserver_exe, 
            f"-QueryPort={server_query_port}", 
