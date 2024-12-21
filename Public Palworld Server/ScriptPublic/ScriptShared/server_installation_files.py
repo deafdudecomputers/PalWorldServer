@@ -64,6 +64,15 @@ def install_mods():
     log("Checking mods...")
     if mods_enabled == 0:
         log("Mods are disabled. Skipping installation.")
+        try:
+            ue4ss_settings = os.path.join(target_path, "UE4SS-settings.ini")
+            ue4ss_dll = os.path.join(target_path, "UE4SS.dll")
+            for file in [ue4ss_settings, ue4ss_dll]:
+                if os.path.exists(file):
+                    os.remove(file)
+                    log(f"Deleted {file}.")
+        except Exception as e:
+            log(f"Error deleting UE4SS files: {e}")
         return
     log("Installing mods...")
     try:
