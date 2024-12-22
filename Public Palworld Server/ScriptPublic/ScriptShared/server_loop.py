@@ -483,6 +483,7 @@ def start_server():
            f"-publicip={public_ip}", 
            f"-port={server_port}", 
            "-useperfthreads",
+           "-NumberOfWorkerThreadsServer=8",
            "-UseMultithreadForDS"]
     if is_public:
         cmd.append("-publiclobby")
@@ -574,7 +575,8 @@ def update_server():
             steamcmd_path, "+force_install_dir", update_dir, "+login", "anonymous",
             "+app_update", str(game_app_id), "validate", "+quit"
         ]
-        subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        #subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(update_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr)
         log("Server update successfully downloaded.")
         for item in os.listdir(update_dir):
             s = os.path.join(update_dir, item)
@@ -599,7 +601,8 @@ def update_server_forced():
         steamcmd_path, "+force_install_dir", palserver_folder, "+login", "anonymous",
         "+app_update", str(game_app_id), "validate", "+quit"
     ]
-    subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    #subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(update_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr)
     log("Server update successfully downloaded.")
     log("Server files successfully updated.")
 def move_depot_files():
@@ -625,7 +628,8 @@ def update_server_manifest(manifest):
         "+download_depot", "2394010", "2394011", manifest,
         "+quit"
     ]
-    subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)    
+    #subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(update_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr) 
     move_depot_files()    
     log("Server update successfully downloaded.")
     log("Server files successfully updated.")
