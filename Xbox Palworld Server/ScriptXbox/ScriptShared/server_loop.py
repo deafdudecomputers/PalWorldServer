@@ -703,6 +703,7 @@ def handle_fixed_files():
     else:
         log("players.log not found.")        
 def clean_level_save(server_file):
+    return
     current_time = time.localtime()
     minutes = current_time.tm_min
     if minutes % 10 != 0:

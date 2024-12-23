@@ -39,6 +39,7 @@ def check_and_install_palguard(palserver_folder, target_path, palguard_enabled, 
     else:
         log("PalGuard.zip not found. Installation failed.")
 def check_and_install_save_tools(palserver_folder, save_tools_folder, log):
+    return
     log("Checking SaveTools...")    
     if os.path.exists(save_tools_folder):
         retries = 5
