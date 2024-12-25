@@ -295,6 +295,20 @@ def check_timer_scheduled():
         last_checked_hour = current_hour
     if restart_initiated:
         return
+    if current_hour in reboot_times:
+        minute_announcements = {
+            "55": "5 minutes",
+            "56": "4 minutes",
+            "57": "3 minutes",
+            "58": "2 minutes",
+            "59": "1 minute",
+        }
+        if current_minute in minute_announcements:
+            announcement_key = f"announcement_{minute_announcements[current_minute].replace(' ', '_')}"
+            if not defined_announcement(announcement_key):
+                send_server_announcement(f"Server restarting in {minute_announcements[current_minute]}...")
+                log(f"Server restarting in {minute_announcements[current_minute]}...")
+                set_announcement(announcement_key)
     if current_hour in reboot_times and current_minute == "00":
         log("Server is restarting now...")
         send_server_shutdown()
@@ -311,21 +325,6 @@ def check_timer_scheduled():
                     send_server_announcement(f"Server restarting in {remaining_hours} hours...")
                     log(f"Server restarting in {remaining_hours} hours...")
                     set_announcement(announcement_key)
-    if current_hour in reboot_times:
-        minute_announcements = {
-            "55": "5 minutes",
-            "56": "4 minutes",
-            "57": "3 minutes",
-            "58": "2 minutes",
-            "59": "1 minute",
-            "00": "1 hour"
-        }
-        if current_minute in minute_announcements:
-            announcement_key = f"announcement_{minute_announcements[current_minute].replace(' ', '_')}"
-            if not defined_announcement(announcement_key):
-                send_server_announcement(f"Server restarting in {minute_announcements[current_minute]}...")
-                log(f"Server restarting in {minute_announcements[current_minute]}...")
-                set_announcement(announcement_key)
 def defined_announcement(announcement_key):
     return globals().get(announcement_key) is not None
 def set_announcement(announcement_key):
