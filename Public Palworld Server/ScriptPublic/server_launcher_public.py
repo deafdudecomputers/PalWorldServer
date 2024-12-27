@@ -30,7 +30,7 @@ def setup_server():
         extract_steamcmd()
         if server_update_enable:
             if server_update_manifest:
-                update_server_manifest("2791071972083794104")  #As of 11/30/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
+                update_server_manifest("610571639048835128")  #As of 12/25/2024, this is the latest Xbox version accessible to current clients. https://steamdb.info/depot/2394011/manifests/
             else:
                 update_server()
                 #update_server_forced()

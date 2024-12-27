@@ -290,9 +290,11 @@ def check_timer_scheduled():
     current_minute = current_time.strftime("%M")
     global last_checked_hour
     global restart_initiated
+    global announcement_flags
     if current_hour != last_checked_hour:
         restart_initiated = False
         last_checked_hour = current_hour
+        reset_announcements()
     if restart_initiated:
         return
     if current_hour in reboot_times:
@@ -304,7 +306,7 @@ def check_timer_scheduled():
             "59": "1 minute",
         }
         if current_minute in minute_announcements:
-            announcement_key = f"announcement_{minute_announcements[current_minute].replace(' ', '_')}"
+            announcement_key = f"{current_hour}_{minute_announcements[current_minute].replace(' ', '_')}"
             if not defined_announcement(announcement_key):
                 send_server_announcement(f"Server restarting in {minute_announcements[current_minute]}...")
                 log(f"Server restarting in {minute_announcements[current_minute]}...")
@@ -319,38 +321,23 @@ def check_timer_scheduled():
         remaining_hours = server_reboot_hours
         while remaining_hours > 1:
             remaining_hours -= 1
-            if (int(current_hour) + remaining_hours) % 24 in map(int, reboot_times):
-                announcement_key = f"announcement_{remaining_hours}_hour"
+            next_hour = (int(current_hour) + remaining_hours) % 24
+            if next_hour in map(int, reboot_times):
+                announcement_key = f"{current_hour}_{remaining_hours}_hour"
                 if not defined_announcement(announcement_key):
                     send_server_announcement(f"Server restarting in {remaining_hours} hours...")
                     log(f"Server restarting in {remaining_hours} hours...")
                     set_announcement(announcement_key)
 def defined_announcement(announcement_key):
-    return globals().get(announcement_key) is not None
+    return announcement_flags.get(announcement_key, False)
 def set_announcement(announcement_key):
-    globals()[announcement_key] = True
+    announcement_flags[announcement_key] = True
 def reset_announcements():
-    global announcement_1_hour, announcement_2_hour, announcement_3_hour
-    global announcement_5_minutes, announcement_4_minutes, announcement_3_minutes
-    global announcement_2_minutes, announcement_1_minutes
-    announcement_1_hour = None
-    announcement_2_hour = None
-    announcement_3_hour = None
-    announcement_5_minutes = None
-    announcement_4_minutes = None
-    announcement_3_minutes = None
-    announcement_2_minutes = None
-    announcement_1_minutes = None
+    global announcement_flags
+    announcement_flags.clear()
 last_checked_hour = ""
 restart_initiated = False
-announcement_1_hour = None
-announcement_2_hour = None
-announcement_3_hour = None
-announcement_5_minutes = None
-announcement_4_minutes = None
-announcement_3_minutes = None
-announcement_2_minutes = None
-announcement_1_minutes = None
+announcement_flags = {}
 save_performed_minute = ""
 def save_server(admin_password, server_address, server_restapi_port):
     global save_performed_minute
@@ -491,15 +478,6 @@ def start_server():
         log(f"Server is starting up, please wait...")
     except Exception as e:
         log(f"Error starting server: {e}")      
-def extract_buildid(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
-        data = json.load(file)
-    try:
-        buildid = data["data"][str(game_app_id)]["depots"]["branches"]["public"]["buildid"]
-        return buildid
-    except KeyError:
-        log("Error: 'buildid' not found in the appinfo file.")
-        return None
 last_checked_minute = None
 def check_update():
     global last_checked_minute    
@@ -509,72 +487,79 @@ def check_update():
     last_checked_minute = current_minute
     appinfo_dir = os.path.join(palserver_folder, "steamapps")
     os.makedirs(appinfo_dir, exist_ok=True)
+    buildid_output_file = os.path.join(palserver_folder, "buildid_output.log")
     appinfo_file = os.path.join(appinfo_dir, f"appmanifest_{game_app_id}.acf")
-    appinfo_file_new = os.path.join(appinfo_dir, f"appmanifest_{game_app_id}_new.acf")
-    url = f"https://api.steamcmd.net/v1/info/{game_app_id}"
-    headers = {'Accept': 'application/json'}    
-    try:
-        response = requests.get(url, headers=headers, timeout=3)
-        response.raise_for_status()
-        data = response.json()
-        status = data.get('status')
-        if status and status.lower() == 'success':
-            with open(appinfo_file_new, "w", encoding="utf-8") as file:
-                json.dump(data, file)
-        else:
-            log(f"Error: Received unexpected status '{status}'.")
+    steamcmd_cmd = [
+        steamcmd_path, "+login", "anonymous", "+app_info_update", str(game_app_id),
+        "+app_info_print", str(game_app_id), "+logoff", "+quit"
+    ]
+    with open(buildid_output_file, "w", encoding="utf-8") as output_file:
+        try:
+            subprocess.run(steamcmd_cmd, text=True, stdout=output_file, stderr=output_file, check=True)
+        except subprocess.CalledProcessError as e:
             return
-    except requests.RequestException as e:
-        log(f"Error: Failed to retrieve game app info. ({e})")
-        return    
-    old_buildid = extract_buildid(appinfo_file) if os.path.exists(appinfo_file) else None
-    new_buildid = extract_buildid(appinfo_file_new)
-    log(f"[Buildid] [Current: {old_buildid}] [New: {new_buildid}]")
-    if old_buildid != new_buildid:
+    buildid = extract_buildid_from_file(buildid_output_file)
+    old_buildid = extract_buildid_from_file(appinfo_file) if os.path.exists(appinfo_file) else None
+    log(f"[Buildid] [Current: {old_buildid}] [New: {buildid}]")
+    if old_buildid != buildid:
         log("Server update detected.")
-        send_server_shutdown()    
-    if os.path.exists(appinfo_file_new):
-        os.remove(appinfo_file_new)
+        send_server_shutdown()
+    if os.path.exists(buildid_output_file):
+        os.remove(buildid_output_file)
+def extract_buildid_from_file(file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        for line in file:
+            if '"buildid"' in line:
+                return line.split('"')[3]
+    return None
 def update_server():
     if not os.path.exists(palserver_folder):
         os.makedirs(palserver_folder)
     log("Checking server update...")
     appinfo_dir = os.path.join(palserver_folder, "steamapps")
     os.makedirs(appinfo_dir, exist_ok=True)
-    appinfo_file = os.path.join(appinfo_dir, f"appmanifest_{game_app_id}.acf")
-    appinfo_file_new = os.path.join(appinfo_dir, f"appmanifest_{game_app_id}_new.acf")
-    url = f"https://api.steamcmd.net/v1/info/{game_app_id}"
-    headers = {'Accept': 'application/json'}
-    while True:
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            status = data.get('status')
-            if status and status.lower() == 'success':
-                with open(appinfo_file_new, "w", encoding="utf-8") as file:
-                    json.dump(data, file)
-                break
-            else:
-                log(f"Error: Received unexpected status '{status}'. Retrying in 1 second...")
-                time.sleep(1)
-        except requests.RequestException as e:
-            log(f"Error: Failed to retrieve game app info. Retrying in 1 second... ({e})")
-            time.sleep(1)
-    old_buildid = extract_buildid(appinfo_file) if os.path.exists(appinfo_file) else None
-    new_buildid = extract_buildid(appinfo_file_new)
-    log(f"[Buildid] [Current: {old_buildid}] [New: {new_buildid}]")
-    if old_buildid != new_buildid:
+    buildid_output_file = os.path.join(palserver_folder, "buildid_output.log")
+    steamcmd_cmd = [
+        steamcmd_path, "+login", "anonymous", "+app_info_update", "1",
+        "+app_info_print", str(game_app_id), "+logoff", "+quit"
+    ]
+    with open(buildid_output_file, "w", encoding="utf-8") as output_file:
+        result = subprocess.run(steamcmd_cmd, text=True, stdout=output_file, stderr=output_file)
+    buildid = extract_buildid_from_file(buildid_output_file)
+    if buildid is None:
         log("Server update detected.")
         timestamp = time.strftime("%m-%d-%Y")
-        update_dir = os.path.join(palserver_folder, "Server_Updates", f"{timestamp}-{new_buildid}")
+        install_dir = os.path.join(palserver_folder, "Server_Install", f"{timestamp}")
+        os.makedirs(install_dir, exist_ok=True)
+        log("Installing the server, please wait...")
+        install_server_cmd = [
+            steamcmd_path, "+force_install_dir", install_dir, "+login", "anonymous",
+            "+app_update", str(game_app_id), "validate", "+quit"
+        ]
+        subprocess.run(install_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr)
+        log("Server successfully installed.")
+        for item in os.listdir(install_dir):
+            s = os.path.join(install_dir, item)
+            d = os.path.join(palserver_folder, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, dirs_exist_ok=True)
+            else:
+                shutil.copy2(s, d)
+        log("Server files successfully installed and copied.")
+        return
+    appinfo_file = os.path.join(appinfo_dir, f"appmanifest_{game_app_id}.acf")
+    old_buildid = extract_buildid_from_file(appinfo_file) if os.path.exists(appinfo_file) else None
+    log(f"[Buildid] [Current: {old_buildid}] [New: {buildid}]")
+    if old_buildid != buildid:
+        log("Server update detected.")
+        timestamp = time.strftime("%m-%d-%Y")
+        update_dir = os.path.join(palserver_folder, "Server_Updates", f"{timestamp}-{buildid}")
         os.makedirs(update_dir, exist_ok=True)
         log("Server update downloading, please wait...")
         update_server_cmd = [
             steamcmd_path, "+force_install_dir", update_dir, "+login", "anonymous",
             "+app_update", str(game_app_id), "validate", "+quit"
         ]
-        #subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(update_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr)
         log("Server update successfully downloaded.")
         for item in os.listdir(update_dir):
@@ -585,11 +570,8 @@ def update_server():
             else:
                 shutil.copy2(s, d)
         log("Server files successfully updated.")
-        os.replace(appinfo_file_new, appinfo_file)
     else:
         log("Server is already updated.")
-    if os.path.exists(appinfo_file_new):
-        os.remove(appinfo_file_new)
 def update_server_forced():
     if not os.path.exists(palserver_folder):
         os.makedirs(palserver_folder)
