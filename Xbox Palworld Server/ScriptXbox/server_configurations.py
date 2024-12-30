@@ -46,6 +46,7 @@ palguard_enabled = 1 #Set to 0 if you do NOT want to install Palguard.
 mods_enabled = 1 #Set to 0 if you do NOT want to install mods.
 server_tweaks_enabled = 1 #Set to 0 if you do NOT want to reconfigure the engine for better server performance.
 is_public = 1 #Set to 0 if you do NOT want to make your server public, aka findable on community server list.
+backup_days = 180 #Set to how many days you want to keep backups of. After certain days, the saves by then will be deleted.
 palserver_exe_cmd = os.path.join(target_path, "PalServer-Win64-Shipping-Cmd.exe") #Do NOT touch this, leave as is.
 palserver_exe_regular = os.path.join(target_path, "PalServer-Win64-Shipping.exe") #Do NOT touch this, leave as is.
 palserver_exe_original = os.path.join(palserver_folder, "PalServer.exe") #Do NOT touch this, leave as is.

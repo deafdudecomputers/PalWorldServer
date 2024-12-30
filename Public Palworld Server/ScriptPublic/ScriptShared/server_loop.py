@@ -63,9 +63,10 @@ def perform_backup(backup_folder, saved_folder, log, send_server_announcement):
 def delete_old_files():
     try:
         now = time.time()
+        retention_period = backup_days * 86400
         for file in os.listdir(backup_folder):
             file_path = os.path.join(backup_folder, file)
-            if os.stat(file_path).st_mtime < now - 90 * 86400:  # 90 days
+            if os.stat(file_path).st_mtime < now - retention_period:
                 if os.path.isfile(file_path):
                     os.remove(file_path)
                     log(f"Deleted old file: {file_path}")
@@ -73,7 +74,7 @@ def delete_old_files():
                     shutil.rmtree(file_path)
                     log(f"Deleted old directory: {file_path}")
     except Exception as e:
-        log(f"Error: Exception while deleting old files. Exception: {e}")       
+        log(f"Error: Exception while deleting old files. Exception: {e}")
 def base64_auth_info():
     credentials = f"{username}:{admin_password}"
     return base64.b64encode(credentials.encode('ascii')).decode('ascii')
