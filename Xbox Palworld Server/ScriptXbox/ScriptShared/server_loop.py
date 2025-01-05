@@ -283,6 +283,8 @@ def check_uptime(palserver_exe):
     else:
         return "Process not found"
 def check_timer_scheduled():
+    if disable_reboots == 1:
+        return
     reboot_times_4_hours = ["00", "04", "08", "12", "16", "20"]
     reboot_times_3_hours = ["01", "05", "09", "13", "17", "21"]
     reboot_times_2_hours = ["02", "06", "10", "14", "18", "22"]
