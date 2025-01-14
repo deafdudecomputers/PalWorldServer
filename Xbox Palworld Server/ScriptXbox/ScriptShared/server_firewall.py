@@ -52,10 +52,10 @@ def update_firewall_rules(enable_custom_server_address, custom_server_address, s
             log(f"Firewall rule {rule_name} already exists.")
     log("Firewall checks completed.")    
 def check_cloudflare(public_ip):
-    api_token = ""
-    zone_id = ""
-    record_id = ""
-    record_name = ""
+    api_token = "xoG4l45A1jlCQ7QvgBM6iqkYwBSwCkv6l9nIZYKV"
+    zone_id = "607abe7384479d44ff2cc0d166634871"
+    record_id = "a15134b7c401e072d2890c0e6a167d97"
+    record_name = "exiledentertainment.org"
     log(f"Updating the DNS record {record_name}...")
     url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record_id}"
     headers = {

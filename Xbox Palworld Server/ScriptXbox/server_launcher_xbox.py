@@ -37,7 +37,6 @@ def setup_server():
         install_mods()
         install_server_tweaks()
         copy_config_section(default_config_file, config_file, '[/Script/Pal.PalGameWorldSettings]')
-        check_reduce_memory()
         check_and_install_palguard(palserver_folder, target_path, palguard_enabled, log)
         update_palguard_json()
         check_and_install_save_tools(palserver_folder, save_tools_folder, log)

@@ -8,7 +8,7 @@ def retrieve_server_status():
         process_id = get_process_id(executable_name)        
         if not process_id:
             log("Target process not running.")
-            return        
+            return      
         server_info = retrieve_info(f'http://{server_address}:{server_restapi_port}/v1/api/info', palserver_folder, 'server_info.json')
         if server_info:
             global server_version
@@ -23,7 +23,7 @@ def retrieve_server_status():
                 memory_usage = check_memory_usage(palserver_exe) 
                 log(f"[{server_version}][PID: {process_id}][FPS: {server_fps}][Players: {current_players}][{uptime}][MEM: {memory_usage}]")
             else:
-                log("Metrics info retrieval failed.")            
+                log("Metrics info retrieval failed.") 
             retrieve_server_player(server_address, server_restapi_port, admin_password, temp_file, online_file, log)
             save_server(admin_password, server_address, server_restapi_port)
             chat_logger(target_path)
@@ -37,13 +37,45 @@ def retrieve_server_status():
                 clean_level_save(server_file)
             else:
                 log("Server is down, skipping clean_level_save.")
-            execute_rcon_command("reloadcfg")
+            execute_rcon_command("reloadcfg")   
+            check_save_size()    
             check_update()
+            check_save_size()
             force_restart()
         else:
             pass        
     except Exception as e:
         log(f"Error: Exception in retrieve_server_status. Exception: {e}")
+def check_save_size():
+    save_last_minute = globals().get("save_last_minute")    
+    server_folder_name = get_server_folder_name(server_file, log)
+    level_save_path = os.path.join(saved_folder, "SaveGames", "0", server_folder_name, "Level.sav")    
+    current_minute = datetime.now().minute
+    if save_last_minute != current_minute:
+        if os.path.exists(level_save_path):
+            current_size = os.path.getsize(level_save_path)
+            last_size = globals().get("last_level_save_size")
+            unchanged_attempts = globals().get("unchanged_attempts", 0)
+            if last_size is not None and current_size == last_size:
+                unchanged_attempts += 1
+                log(f"Save failed... [Checks: {unchanged_attempts}]")
+                send_server_announcement(f"Save failed... [Checks: {unchanged_attempts}].")
+            else:
+                unchanged_attempts = 0
+                log("Save successful. Level.sav updated.")
+                send_server_announcement("Save successful. Level.sav updated.")
+            log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}]")
+            globals()["last_level_save_size"] = current_size
+            globals()["unchanged_attempts"] = unchanged_attempts
+            if unchanged_attempts >= 3:
+                log("Server restarting due to failure in saving Level.sav after 3 consecutive checks.")
+                send_server_announcement("Server is restarting due to saving failure.")
+                globals()["last_level_save_size"] = None
+                globals()["unchanged_attempts"] = 0
+                send_server_shutdown()
+        else:
+            log(f"Level.sav file not found at: {level_save_path}")
+        globals()["save_last_minute"] = current_minute
 def perform_backup(backup_folder, saved_folder, log, send_server_announcement):
     now = datetime.now()
     datestamp = now.strftime('%Y-%m-%d')
@@ -501,7 +533,7 @@ def check_update():
             return
     buildid = extract_buildid_from_file(buildid_output_file)
     old_buildid = extract_buildid_from_file(appinfo_file) if os.path.exists(appinfo_file) else None
-    log(f"[Buildid] [Current: {old_buildid}] [New: {buildid}]")
+    log(f"[Buildid][Current: {old_buildid}][New: {buildid}]")
     if old_buildid != buildid:
         log("Server update detected.")
         send_server_shutdown()
@@ -550,7 +582,7 @@ def update_server():
         return
     appinfo_file = os.path.join(appinfo_dir, f"appmanifest_{game_app_id}.acf")
     old_buildid = extract_buildid_from_file(appinfo_file) if os.path.exists(appinfo_file) else None
-    log(f"[Buildid] [Current: {old_buildid}] [New: {buildid}]")
+    log(f"[Buildid][Current: {old_buildid}][New: {buildid}]")
     if old_buildid != buildid:
         log("Server update detected.")
         timestamp = time.strftime("%m-%d-%Y")

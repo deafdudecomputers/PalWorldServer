@@ -25,19 +25,33 @@ def check_powershell():
     except subprocess.CalledProcessError:
         log(f"Failed to install PowerShell 7. Please install it manually from {url_windows}.")
         return False
+_PALGUARD_LATEST_URL = "https://github.com/Ultimeit/palguard/releases/latest/download"
 def check_and_install_palguard(palserver_folder, target_path, palguard_enabled, log):
     log("Checking PalGuard...")    
     if not palguard_enabled:
         log("PalGuard is disabled. Skipping installation.")
-        return    
+        return
     log("Installing PalGuard...")
-    palguard_zip = os.path.join(palserver_folder, "PalGuard.zip")    
-    if os.path.exists(palguard_zip):
-        with zipfile.ZipFile(palguard_zip, 'r') as zip_ref:
-            zip_ref.extractall(target_path)
+    palguard_version_dll = os.path.join(target_path, "version.dll")
+    palguard_palguard_dll = os.path.join(target_path, "PalGuard.dll")
+    try:
+        log("Downloading version.dll...")
+        response = requests.get(_PALGUARD_LATEST_URL + "/version.dll", stream=True)
+        response.raise_for_status()
+        with open(palguard_version_dll, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        log(f"Downloaded version.dll to '{palguard_version_dll}'")
+        log("Downloading PalGuard.dll...")
+        response = requests.get(_PALGUARD_LATEST_URL + "/PalGuard.dll", stream=True)
+        response.raise_for_status()
+        with open(palguard_palguard_dll, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        log(f"Downloaded PalGuard.dll to '{palguard_palguard_dll}'")
         log("PalGuard installation completed.")
-    else:
-        log("PalGuard.zip not found. Installation failed.")
+    except requests.exceptions.RequestException as e:
+        log(f"Error downloading PalGuard files: {e}")
 def check_and_install_save_tools(palserver_folder, save_tools_folder, log):
     return
     log("Checking SaveTools...")    
@@ -91,18 +105,7 @@ def install_server_tweaks():
         extract_zip(os.path.join(palserver_folder, "ServerTweaks.zip"), palserver_folder)
         log("Server tweaks installation completed.")
     except Exception as e:
-        log(f"Error installing server tweaks: {e}")
-def check_reduce_memory():
-    log("Checking Reduce Memory...")
-    log("Installing Reduce Memory...")
-    reduce_memory_folder = os.path.join(palserver_folder, "ReduceMemory")
-    if not os.path.exists(reduce_memory_folder):
-        os.makedirs(reduce_memory_folder)
-    try:
-        extract_zip(os.path.join(palserver_folder, "ReduceMemory.zip"), reduce_memory_folder)
-        log("Reduce Memory installation completed.")
-    except Exception as e:
-        log(f"Error installing Reduce Memory: {e}")        
+        log(f"Error installing server tweaks: {e}")      
 def download_and_extract_files(url, dest_folder):
     log("Downloading server files...")
     try:
@@ -131,11 +134,8 @@ def delete_zipped_files(palserver_folder, log):
     deletion_zipped_files = [
         "ServerFiles.zip",
         "Mods.zip",
-        "PalGuard.zip",
-        "PalworldSaveTools.zip",
         "ServerTweaks.zip",
-        "Steamcmd.zip",
-        "ReduceMemory.zip"
+        "Steamcmd.zip"
     ]    
     for file_name in deletion_zipped_files:
         file_path = os.path.join(palserver_folder, file_name)
