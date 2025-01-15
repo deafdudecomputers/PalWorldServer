@@ -36,7 +36,7 @@ fixed_save = os.path.join(save_tools_folder, "fixed", "Level.sav") #Do NOT touch
 username = "admin" #Do NOT touch this, leave as is.
 password = admin_password #Do NOT touch this, leave as is.
 discord_server_link = "" #Edit this for your discord server link.
-discord_webhook_url = "https://discordapp.com/api/webhooks/1252471173439160383/65KaN0s9GzKZTp5B1oNp5o9ByhAlSDGkUi4vBncWJanPIzuBr6k-PK2KKJcBtSaw54t" #Edit this for your discord webhook.
+discord_webhook_url = "https://discordapp.com/api/webhooks/1252471173439160383/65KaN0s9GzKZTp5B1oNp5o9ByhAlSDGkUi4vBncWJanPIzuBr6k-PK2KKJcBtSaw54t_" #Edit this for your discord webhook.
 server_files_url = "https://www.dropbox.com/scl/fi/7j4r4zbl6gjt6avnbzchv/ServerFiles.zip?rlkey=2yc0e7pxo8lqy3yxto1asg75u&st=afj22jv3&dl=1" #Do NOT touch this, leave as is.
 config_server_name = f"{server_name} Server" #Edit this for your server name.
 config_server_desc = f"{server_name} Server" #Edit this for your server desc.
