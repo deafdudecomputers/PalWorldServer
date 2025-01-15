@@ -39,7 +39,6 @@ def setup_server():
         copy_config_section(default_config_file, config_file, '[/Script/Pal.PalGameWorldSettings]')
         check_and_install_palguard(palserver_folder, target_path, palguard_enabled, log)
         update_palguard_json()
-        check_and_install_save_tools(palserver_folder, save_tools_folder, log)
         public_ip = get_public_ip()
         update_firewall_rules(
             enable_custom_server_address, custom_server_address, server_query_port, server_port,

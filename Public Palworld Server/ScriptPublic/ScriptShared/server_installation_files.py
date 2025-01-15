@@ -52,29 +52,6 @@ def check_and_install_palguard(palserver_folder, target_path, palguard_enabled, 
         log("PalGuard installation completed.")
     except requests.exceptions.RequestException as e:
         log(f"Error downloading PalGuard files: {e}")
-def check_and_install_save_tools(palserver_folder, save_tools_folder, log):
-    return
-    log("Checking SaveTools...")    
-    if os.path.exists(save_tools_folder):
-        retries = 5
-        for attempt in range(retries):
-            try:
-                shutil.rmtree(save_tools_folder)
-                break
-            except PermissionError:
-                log("SaveTools folder in use, retrying...")
-                time.sleep(1)
-        else:
-            log("Failed to remove SaveTools folder after multiple attempts.")
-            return    
-    log("Installing SaveTools...")
-    save_tools_zip = os.path.join(palserver_folder, "PalworldSaveTools.zip")
-    if os.path.exists(save_tools_zip):
-        with zipfile.ZipFile(save_tools_zip, 'r') as zip_ref:
-            zip_ref.extractall(palserver_folder)
-        log("SaveTools installation completed.")
-    else:
-        log("PalworldSaveTools.zip not found. Installation failed.") 
 def install_mods():
     log("Checking mods...")
     if mods_enabled == 0:
