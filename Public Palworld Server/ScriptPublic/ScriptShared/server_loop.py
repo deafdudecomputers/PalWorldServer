@@ -62,14 +62,14 @@ def check_save_size():
                 send_server_announcement(f"Save failed... [Checks: {unchanged_attempts}].")
             else:
                 unchanged_attempts = 0
-                log("Save successful. Level.sav updated.")
-                send_server_announcement("Save successful. Level.sav updated.")
+                log("Save completed successfully.")
+                send_server_announcement("Save completed successfully.")
             log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}]")
             globals()["last_level_save_size"] = current_size
             globals()["unchanged_attempts"] = unchanged_attempts
             if unchanged_attempts >= 3:
-                log("Server restarting due to failure in saving Level.sav after 3 consecutive checks.")
-                send_server_announcement("Server is restarting due to saving failure.")
+                log("Server is restarting due to a save failure.")
+                send_server_announcement("Server is restarting due to a save failure.")
                 globals()["last_level_save_size"] = None
                 globals()["unchanged_attempts"] = 0
                 send_server_shutdown()
