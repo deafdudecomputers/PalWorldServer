@@ -59,11 +59,11 @@ def check_save_size():
             if last_size is not None and current_size == last_size:
                 unchanged_attempts += 1
                 log(f"Save failed... [Checks: {unchanged_attempts}]")
-                send_server_announcement(f"Save failed... [Checks: {unchanged_attempts}].")
+                #send_server_announcement(f"Save failed... [Checks: {unchanged_attempts}].")
             else:
                 unchanged_attempts = 0
                 log("Save completed successfully.")
-                send_server_announcement("Save completed successfully.")
+                #send_server_announcement("Save completed successfully.")
             log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}]")
             globals()["last_level_save_size"] = current_size
             globals()["unchanged_attempts"] = unchanged_attempts
