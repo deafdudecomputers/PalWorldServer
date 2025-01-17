@@ -38,9 +38,8 @@ def retrieve_server_status():
             else:
                 log("Server is down, skipping clean_level_save.")
             execute_rcon_command("reloadcfg")   
-            check_save_size()    
+            check_save_size()         
             check_update()
-            check_save_size()
             force_restart()
         else:
             pass        
@@ -54,17 +53,16 @@ def check_save_size():
     if save_last_minute != current_minute:
         if os.path.exists(level_save_path):
             current_size = os.path.getsize(level_save_path)
+            last_modified = datetime.fromtimestamp(os.path.getmtime(level_save_path)).strftime("%Y-%m-%d %H:%M:%S")
             last_size = globals().get("last_level_save_size")
             unchanged_attempts = globals().get("unchanged_attempts", 0)
             if last_size is not None and current_size == last_size:
                 unchanged_attempts += 1
-                log(f"Save failed... [Checks: {unchanged_attempts}]")
-                #send_server_announcement(f"Save failed... [Checks: {unchanged_attempts}].")
+                log(f"Save failed... [Checks: {unchanged_attempts}][Last Modified: {last_modified}]")
             else:
                 unchanged_attempts = 0
-                log("Save completed successfully.")
-                #send_server_announcement("Save completed successfully.")
-            log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}]")
+                log(f"Save completed successfully. [Last Modified: {last_modified}]")
+            log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}][Last Modified: {last_modified}]")
             globals()["last_level_save_size"] = current_size
             globals()["unchanged_attempts"] = unchanged_attempts
             if unchanged_attempts >= 3:

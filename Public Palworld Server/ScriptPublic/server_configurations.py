@@ -184,7 +184,7 @@ def update_palworldsettings_file(config_file, server_restapi_port, server_rcon_p
         'bEnableAimAssistPad=[a-zA-Z]+': 'bEnableAimAssistPad=True',
         'bEnableAimAssistKeyboard=[a-zA-Z]+': 'bEnableAimAssistKeyboard=False',
         'RandomizerType=[a-zA-Z]+': 'RandomizerType=None', #None, Region
-        'RandomizerSeed="[a-zA-Z0-9]*"': 'RandomizerSeed=289BFC31469A6025DDB3', #Randomly generated via solo world seed
+        'RandomizerSeed="[a-zA-Z0-9]*"': 'RandomizerSeed="289BFC31469A6025DDB3"', #Randomly generated via solo world seed
         'bBuildAreaLimit=[a-zA-Z]+': 'bBuildAreaLimit=True',
         'bHardcore=[a-zA-Z]+': 'bHardcore=False',
         'bPalLost=[a-zA-Z]+': 'bPalLost=False',
