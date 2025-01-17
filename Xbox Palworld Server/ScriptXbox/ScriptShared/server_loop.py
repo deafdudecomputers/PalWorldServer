@@ -63,7 +63,7 @@ def check_save_size():
             log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}][Last Modified: {last_modified}]")
             globals()["last_level_save_size"] = current_size
             globals()["unchanged_attempts"] = unchanged_attempts
-            if unchanged_attempts >= 3:
+            if unchanged_attempts >= 5:
                 log("Server is restarting due to a save failure.")
                 send_server_announcement("Server is restarting due to a save failure.")
                 globals()["last_level_save_size"] = None
