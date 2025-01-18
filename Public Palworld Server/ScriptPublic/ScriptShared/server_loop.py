@@ -37,7 +37,8 @@ def retrieve_server_status():
                 clean_level_save(server_file)
             else:
                 log("Server is down, skipping clean_level_save.")
-            execute_rcon_command("reloadcfg")   
+            execute_rcon_command("reloadcfg")
+            execute_rcon_command("save")               
             check_save_size()         
             check_update()
             force_restart()
