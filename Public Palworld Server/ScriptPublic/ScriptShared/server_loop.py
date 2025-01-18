@@ -25,7 +25,7 @@ def retrieve_server_status():
             else:
                 log("Metrics info retrieval failed.") 
             retrieve_server_player(server_address, server_restapi_port, admin_password, temp_file, online_file, log)
-            save_server(admin_password, server_address, server_restapi_port)
+            #save_server(admin_password, server_address, server_restapi_port)
             chat_logger(target_path)
             perform_backup(backup_folder, saved_folder, log, send_server_announcement)
             delete_old_files()
@@ -64,7 +64,7 @@ def check_save_size():
             log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}][Last Modified: {last_modified}]")
             globals()["last_level_save_size"] = current_size
             globals()["unchanged_attempts"] = unchanged_attempts
-            if unchanged_attempts >= 5:
+            if unchanged_attempts >= 3:
                 log("Server is restarting due to a save failure.")
                 send_server_announcement("Server is restarting due to a save failure.")
                 globals()["last_level_save_size"] = None
