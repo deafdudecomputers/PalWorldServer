@@ -1,7 +1,5 @@
 from server_utils import *
 from server_configurations import *
-status_file_path = os.path.join(save_tools_folder, "fix_world_running.status")
-lock_file_path = os.path.join(saved_folder, "clean_level_save.lock")
 def retrieve_server_status():
     try:
         executable_name = os.path.basename(palserver_exe)
@@ -25,7 +23,6 @@ def retrieve_server_status():
             else:
                 log("Metrics info retrieval failed.") 
             retrieve_server_player(server_address, server_restapi_port, admin_password, temp_file, online_file, log)
-            #save_server(admin_password, server_address, server_restapi_port)
             chat_logger(target_path)
             perform_backup(backup_folder, saved_folder, log, send_server_announcement)
             delete_old_files()
@@ -33,15 +30,11 @@ def retrieve_server_status():
             check_uptime(palserver_exe)
             check_timer_scheduled()
             process_id = get_process_id(executable_name)
-            if process_id:
-                clean_level_save(server_file)
-            else:
-                log("Server is down, skipping clean_level_save.")
-            execute_rcon_command("reloadcfg")
-            execute_rcon_command("save")               
+            execute_rcon_command(f"reloadcfg")
+            execute_rcon_command(f"save")
+            #save_server()
             check_save_size()         
             check_update()
-            force_restart()
         else:
             pass        
     except Exception as e:
@@ -244,36 +237,19 @@ def retrieve_server_player(server_address, server_restapi_port, admin_password, 
     for player in new_players:
         user_id, player_id, level, ip = temp_info[player]
         message = f"{player} ({user_id}) ({player_id}) ({ip}) has joined the server."
-        send_to_discord(message, discord_webhook_url)
         log(message)
         message = f"{player} has joined the server."
         send_server_announcement(message)
     for player in left_players:
         user_id, player_id, level, ip = player_info[player]
         message = f"{player} ({user_id}) ({player_id}) ({ip}) has left the server."
-        send_to_discord(message, discord_webhook_url)
         log(message)
         message = f"{player} has left the server."
         send_server_announcement(message)
     os.replace(temp_file, online_file)
 def send_server_announcement(message):
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Basic {base64.b64encode(f"admin:{admin_password}".encode()).decode()}'
-    }    
-    url = f'http://{server_address}:{server_restapi_port}/v1/api/announce'
-    body = json.dumps({"message": message})    
-    try:
-        response = requests.post(url, headers=headers, data=body, timeout=3)
-        response.raise_for_status()  
-        if response.status_code == 200:
-            log(f"Announcement sent: {message}")
-        else:
-            log(f"Error: Failed to send server announcement. Status code: {response.status_code}")
-    except requests.HTTPError as http_err:
-        log(f"HTTP error occurred: {http_err}")
-    except Exception as e:
-        log(f"Error: Failed to send server announcement. Exception: {e}")
+    execute_rcon_command(f"pgbroadcast {message}")
+    log(f"Announcement sent: {message}")
 def check_memory_usage(palserver_exe):
     executable_name = os.path.basename(palserver_exe)
     process_found = False
@@ -373,70 +349,21 @@ last_checked_hour = ""
 restart_initiated = False
 announcement_flags = {}
 save_performed_minute = ""
-def save_server(admin_password, server_address, server_restapi_port):
+def save_server():
     global save_performed_minute
-    save_minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]    
-    current_time = datetime.now()
-    current_save_minute = current_time.strftime("%M")
-    if current_save_minute not in save_minutes:
+    save_minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
+    current_save_minute = datetime.now().strftime("%M")    
+    if current_save_minute not in save_minutes or save_performed_minute == current_save_minute:
         return    
-    if save_performed_minute != current_save_minute:
-        save_performed_minute = current_save_minute
-    else:
-        return
-    url = f"http://{server_address}:{server_restapi_port}/v1/api/save"
-    username = 'admin'
-    password = admin_password
-    base64_auth_info = base64.b64encode(f"{username}:{password}".encode('ascii')).decode('ascii')
-    headers = {
-        'Accept': 'application/json',
-        'Authorization': f'Basic {base64_auth_info}'
-    }
+    save_performed_minute = current_save_minute
     try:
-        response = requests.post(url, headers=headers, timeout=3)
-        if response.ok:
-            log("Server successfully saved.")
-            send_server_announcement("Server successfully saved.")
-        else:
-            pass
-    except requests.RequestException as e:
+        execute_rcon_command("save")
+        log("Server successfully saved.")
+        send_server_announcement("Server successfully saved.")
+    except Exception as e:
         pass
-def force_restart():
-    return
-    log("Server is restarting now...")
-    send_server_shutdown()
-    #send_server_shutdown_restapi()
-    #send_server_shutdown_rcon()
-    restart_initiated = True
-    reset_announcements()
-    return
-def send_server_shutdown_restapi():
-    url = f"http://{server_address}:{server_restapi_port}/v1/api/shutdown"
-    username = 'admin'
-    password = admin_password
-    base64_auth_info = base64.b64encode(f"{username}:{password}".encode('ascii')).decode('ascii')
-    headers = {
-        'Accept': 'application/json',
-        'Authorization': f'Basic {base64_auth_info}'
-    }
-    waittime = 1
-    shutdown_message = "Server will shut down now."
-    data = {
-        "waittime": waittime,
-        "message": shutdown_message
-    }    
-    try:
-        response = requests.post(url, headers=headers, json=data, timeout=3)
-        log(f"REST API Response content: {response.text}")
-        if response.ok:
-            log("Server successfully shut down via REST API.")
-        else:
-            log(f"Server shutdown failed with status code: {response.status_code}")
-    except requests.RequestException as e:
-        log(f"Server shutdown request failed: {e}")    
 def send_server_shutdown():
     send_server_shutdown_rcon()
-    #send_server_shutdown_restapi()
     return
     for proc in psutil.process_iter(['pid', 'exe']):
         if proc.info['exe'] and target_path in proc.info['exe']:
@@ -476,22 +403,20 @@ def chat_logger(target_path):
     chatlog_file = os.path.join(target_path, "ChatLog.txt")
     last_line_file = os.path.join(target_path, "ChatLog_Last.txt")    
     if not os.path.exists(chatlog_file):
-        with open(chatlog_file, 'w', encoding='utf-8') as f:
-            f.write("0")    
+        open(chatlog_file, 'w', encoding='utf-8').close()    
     if not os.path.exists(last_line_file):
-        with open(last_line_file, 'w', encoding='utf-8') as f:
-            f.write("0")    
+        open(last_line_file, 'w', encoding='utf-8').close()    
+    last_line = 0
     with open(last_line_file, 'r', encoding='utf-8') as f:
-        last_line = int(f.read().strip())    
+        last_line = int(f.read().strip() or 0)    
     with open(chatlog_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()    
     for i, line in enumerate(lines[last_line:]):
         line = line.strip()
         last_line += 1
-        send_to_discord(line, discord_webhook_url)
         log(f"{line}")    
     with open(last_line_file, 'w', encoding='utf-8') as f:
-        f.write(str(last_line))      
+        f.write(str(last_line))   
 def start_server():
     global server_query_port, server_port, server_address
     server_query_port = str(server_query_port)
@@ -606,20 +531,6 @@ def update_server():
         log("Server files successfully updated.")
     else:
         log("Server is already updated.")
-def update_server_forced():
-    if not os.path.exists(palserver_folder):
-        os.makedirs(palserver_folder)
-    log("Checking server update...")
-    log("Server update detected.")
-    log("Server update downloading, please wait...")
-    update_server_cmd = [
-        steamcmd_path, "+force_install_dir", palserver_folder, "+login", "anonymous",
-        "+app_update", str(game_app_id), "validate", "+quit"
-    ]
-    #subprocess.run(update_server_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(update_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr)
-    log("Server update successfully downloaded.")
-    log("Server files successfully updated.")
 def move_depot_files():
     depot_download_folder = os.path.join(steamcmd_folder, "steamapps", "content", "app_2394010", "depot_2394011")    
     if os.path.exists(depot_download_folder):
@@ -647,42 +558,7 @@ def update_server_manifest(manifest):
     subprocess.run(update_server_cmd, text=True, stdout=sys.stdout, stderr=sys.stderr) 
     move_depot_files()    
     log("Server update successfully downloaded.")
-    log("Server files successfully updated.")
-def send_to_discord(message, discord_webhook_url):
-    message = message.replace("'", "''")
-    payload = {'content': message}    
-    response = requests.post(
-        discord_webhook_url,
-        headers={'Content-Type': 'application/json'},
-        data=json.dumps(payload)
-    )    
-    if response.status_code != 204:
-        print(f"Failed to send message: {response.status_code} - {response.text}")        
-def playerslog_to_discord(discord_webhook_url):
-    players_log = os.path.join(save_tools_folder, "players.log")
-    if os.path.exists(players_log):
-        try:
-            with open(players_log, 'r', encoding='utf-8') as log_file:
-                log_content = log_file.read()
-        except UnicodeDecodeError:
-            with open(players_log, 'r', encoding='latin-1') as log_file:
-                log_content = log_file.read()
-        max_length = 2000
-        delay = 1 
-        for i in range(0, len(log_content), max_length):
-            chunk = log_content[i:i + max_length]
-            send_to_discord(chunk, discord_webhook_url)
-            time.sleep(delay)
-    else:
-        print("players.log not found.")        
-def send_file_to_discord(discord_webhook_url, file_path, message_content=''):
-    if not os.path.exists(file_path):
-        print(f"File {file_path} does not exist.")
-        return
-    with open(file_path, 'rb') as file:
-        files = {'file': (os.path.basename(file_path), file)}
-        payload = {'content': message_content}
-        response = requests.post(discord_webhook_url, files=files, data=payload)        
+    log("Server files successfully updated.")              
 def delete_json_files():
     online_file = os.path.join(palserver_folder, "players_online.json")
     temp_file = os.path.join(palserver_folder, "temp_players.json")
@@ -691,128 +567,7 @@ def delete_json_files():
             try:
                 os.remove(file)
             except Exception as e:
-                log("")                
-def handle_fixed_files():
-    players_log = os.path.join(save_tools_folder, "players.log")
-    if os.path.exists(players_log):
-        send_file_to_discord(discord_webhook_url, players_log, "Here is the latest players log file.")
-        date_folder = datetime.now().strftime("%m.%d.%Y")
-        hour_folder = datetime.now().strftime("%I %p") 
-        server_players_folder = os.path.join(palserver_folder, "Server_Players", date_folder, hour_folder)
-        os.makedirs(server_players_folder, exist_ok=True)
-        log_filename = f"{datetime.now().strftime('%I.%M.%S%p')}_players.log"
-        log_file_path = os.path.join(server_players_folder, log_filename)
-        shutil.copy(players_log, log_file_path)
-        pal_logger_folder = os.path.join(save_tools_folder, "Pal Logger")
-        if os.path.exists(pal_logger_folder):
-            zip_filename = f"{datetime.now().strftime('%I.%M.%S%p')}_Pal_Logger.zip"
-            zip_file_path = os.path.join(server_players_folder, zip_filename)
-            with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(pal_logger_folder):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        zipf.write(file_path, os.path.relpath(file_path, pal_logger_folder))            
-            send_file_to_discord(discord_webhook_url, zip_file_path, "Here is the latest zipped Pal Logger folder.")
-        else:
-            log("Pal Logger folder not found.")
-    else:
-        log("players.log not found.")        
-def clean_level_save(server_file):
-    return
-    current_time = time.localtime()
-    minutes = current_time.tm_min
-    if minutes % 10 != 0:
-        if os.path.exists(lock_file_path):
-            os.remove(lock_file_path)
-        return    
-    if os.path.exists(lock_file_path) or os.path.exists(status_file_path):
-        return
-    server_folder_name = get_server_folder_name(server_file, log)
-    if not server_folder_name:
-        log("DedicatedServerName not found!")
-        return       
-    level_save_search_path = os.path.join(saved_folder, "SaveGames", "0", server_folder_name, "Level.sav")
-    players_folder_search_path = os.path.join(saved_folder, "SaveGames", "0", server_folder_name, "Players")    
-    if not os.path.exists(level_save_search_path):
-        log("Level.sav not found, skipping the task.")
-        return
-    try:
-        with open(level_save_search_path, 'r+'):
-            log("Level.sav is able to be used, processing with fix_world.cmd...")
-    except IOError as e:
-        log(f"Level.sav is currently in use or inaccessible: {e}")
-        return
-    fix_save = os.path.join(save_tools_folder, "fix_world.cmd")
-    if not os.path.exists(fix_save):
-        log("fix_world.cmd not found. Aborting...")
-        return
-    try:
-        temp_level_save_path = os.path.join(save_tools_folder, "Level.sav")
-        shutil.copy(level_save_search_path, temp_level_save_path)
-        if not os.path.exists(temp_level_save_path):
-            log("Failed to copy Level.sav to save_tools_folder. Aborting...")
-            return
-        log(f"Level.sav copied successfully to {temp_level_save_path}")
-    except Exception as e:
-        log(f"Error copying Level.sav: {e}")
-        return
-    try:
-        players_folder_destination_path = os.path.join(save_tools_folder, "Players")
-        if os.path.exists(players_folder_search_path):
-            if os.path.exists(players_folder_destination_path):
-                shutil.rmtree(players_folder_destination_path)
-            shutil.copytree(players_folder_search_path, players_folder_destination_path)
-            if not os.path.exists(players_folder_destination_path):
-                log("Failed to copy the Players folder. Aborting...")
-                return
-            log(f"Players folder copied successfully to {players_folder_destination_path}")
-        else:
-            log("Players folder not found. Proceeding without Players data...")
-    except Exception as e:
-        log(f"Error copying Players folder: {e}")
-        return
-    try:
-        with open(status_file_path, 'w') as status_file:
-            status_file.write("Running")
-        with open(lock_file_path, 'w') as lock_file:
-            lock_file.write("Locked")
-    except Exception as e:
-        log(f"Error writing status or lock files: {e}")
-        return
-    def run_fix_world_cmd():
-        log("Running fix_world.cmd, please wait...")
-        process = None
-        try:
-            process = subprocess.Popen([fix_save, temp_level_save_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            try:
-                process.communicate(timeout=300)
-            except subprocess.TimeoutExpired:
-                log("fix_world.cmd timed out. Terminating...")
-                try:
-                    process.kill()
-                except Exception as kill_error:
-                    log(f"Error terminating process: {kill_error}")
-                try:
-                    process.communicate()
-                except Exception as comm_error:
-                    log(f"Error communicating with process after kill: {comm_error}")
-                log("fix_world.cmd terminated due to timeout.")
-            else:
-                log("Fix_world.cmd has completed the task...")
-        except Exception as e:
-            log(f"Error running fix_world.cmd: {e}")
-        finally:
-            if os.path.exists(status_file_path):
-                os.remove(status_file_path)
-            if os.path.exists(temp_level_save_path):
-                os.remove(temp_level_save_path)
-            if os.path.exists(players_folder_destination_path):
-                shutil.rmtree(players_folder_destination_path)
-            log("Temporary files cleaned up.")
-            set_console_title(batch_title)
-            handle_fixed_files()
-    thread = threading.Thread(target=run_fix_world_cmd)
-    thread.start()
+                log("")                     
 def get_server_folder_name(server_file, log):
     if not os.path.exists(server_file):
         log("DedicatedServerName not found in the server file.")
@@ -821,15 +576,22 @@ def get_server_folder_name(server_file, log):
         for line in file:
             if line.startswith("DedicatedServerName="):
                 server_folder_name = line.strip().split("=", 1)[1]
+                #log(f"Dedicated Server Name: {server_folder_name}")
                 return server_folder_name
     log("DedicatedServerName not found in the server file.")
     return None
-def execute_rcon_command(command):
+def execute_rcon_command(command, log_enabled=False):
     try:
         with MCRcon(server_address, admin_password, port=server_rcon_port) as mcr:
-            response = mcr.command(command)
+            response = mcr.command(command).strip()
+            if log_enabled:
+                log(f"Executing RCON command: {command}")
+                log(f"Command executed successfully. Response: {response}")
+            return response
     except Exception as e:
-        pass
+        if log_enabled:
+            log(f"Error executing RCON command: {command}. Exception: {e}")
+        return None
 def copy_config_section(default_file, target_file, start_marker):
     copy_lines = False
     with open(default_file, 'r', encoding='utf-8') as src, open(target_file, 'w', encoding='utf-8') as dest:
