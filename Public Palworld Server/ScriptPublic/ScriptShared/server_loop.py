@@ -428,7 +428,7 @@ def start_server():
            f"-publicip={public_ip}", 
            f"-port={server_port}", 
            "-useperfthreads",
-           "-NumberOfWorkerThreadsServer=8",
+           "-NumberOfWorkerThreadsServer=7",
            "-UseMultithreadForDS"]
     if is_public:
         cmd.append("-publiclobby")
