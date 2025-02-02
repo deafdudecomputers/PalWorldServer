@@ -54,7 +54,7 @@ palguard_json = os.path.join(target_path, "PalGuard", "PalGuard.json") #Do NOT t
 server_update_enable = 1 #Set to 1 if you want it to update, otherwise set to 0 if you want to disable the updates.
 server_update_manifest = 0 #Set to 1 if you want it to update to certain version(manifest), otherwise set to 0 if you want to disable the updates.
 disable_reboots = 1 #Set to 1 if you don't want scheduled reboots. Otherwise, set to 0 if you want scheduled reboots.
-disable_announcements = 0 #Set to 0 if you don't want announcements. Otherwise, set to 1 if you want announcements.
+disable_announcements = 0 #Set to 1 if you don't want announcements. Otherwise, set to 0 if you want announcements.
 def get_public_ip():
     response = requests.get("https://icanhazip.com")
     return response.text.strip()
