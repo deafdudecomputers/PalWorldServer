@@ -189,6 +189,7 @@ def update_palworldsettings_file(config_file, server_restapi_port, server_rcon_p
         'ItemWeightRate=[0-9.]+': 'ItemWeightRate=1.000000',
         'MaxBuildingLimitNum=[0-9.]+': 'MaxBuildingLimitNum=0',
         'ServerReplicatePawnCullDistancee=[0-9.]+': 'ServerReplicatePawnCullDistance=5000',
+        'EnablePredatorBossPal=[a-zA-Z]+': 'EnablePredatorBossPal=False',
         'LogFormatType=[a-zA-Z]+': 'LogFormatType=Json'
     }
     try:
