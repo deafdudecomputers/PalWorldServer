@@ -56,8 +56,8 @@ def check_save_size():
                 send_server_announcement(f"Caution: Server save failed.")
             else:
                 unchanged_attempts = 0
-                log("Server successfully saved.")
-                send_server_announcement("Server successfully saved.")
+                #log("Server successfully saved.")
+                #send_server_announcement("Server successfully saved.")
             log(f"[Save][Current: {current_size}][Old: {last_size}][Checks: {unchanged_attempts}][Last Modified: {last_modified}]")
             globals()["last_level_save_size"] = current_size
             globals()["unchanged_attempts"] = unchanged_attempts
