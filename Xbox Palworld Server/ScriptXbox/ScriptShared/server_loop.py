@@ -272,11 +272,16 @@ def check_uptime(palserver_exe):
         cmd_get_start_time = f'powershell "(Get-Process -Id {process_id} | Select-Object -ExpandProperty StartTime)"'
         result = subprocess.run(cmd_get_start_time, capture_output=True, text=True, shell=True)
         start_time_str = result.stdout.strip()        
-        try:
-            start_time = datetime.strptime(start_time_str, '%A, %B %d, %Y %I:%M:%S %p')
-        except ValueError as e:
-            log(f"Error parsing start time: {e}")
-            return "Unknown"            
+        formats = ['%A, %B %d, %Y %I:%M:%S %p', '%d/%m/%Y %I:%M:%S %p', '%d-%m-%Y %I:%M:%S %p']
+        for fmt in formats:
+            try:
+                start_time = datetime.strptime(start_time_str, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            log("Error: Unable to parse start time")
+            return "Unknown"  
         current_time = datetime.now()
         uptime_seconds = int((current_time - start_time).total_seconds())
         hours = uptime_seconds // 3600
