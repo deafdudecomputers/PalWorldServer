@@ -248,6 +248,7 @@ def retrieve_server_player(server_address, server_restapi_port, admin_password, 
         send_server_announcement(message)
     os.replace(temp_file, online_file)
 def send_server_announcement(message):
+    if disable_announcements == 1: return
     execute_rcon_command(f"pgbroadcast {message}")
     log(f"Announcement sent: {message}")
 def check_memory_usage(palserver_exe):
