@@ -1,44 +1,39 @@
 from server_utils import *
 from server_configurations import *
 def retrieve_server_status():
-    try:
-        executable_name = os.path.basename(palserver_exe)
-        process_id = get_process_id(executable_name)        
-        if not process_id:
-            log("Target process not running.")
-            return      
-        server_info = retrieve_info(f'http://{server_address}:{server_restapi_port}/v1/api/info', palserver_folder, 'server_info.json')
-        if server_info:
-            global server_version
-            server_version = server_info.get('version', '')
-            server_version = server_version.split('.')[0:3]
-            server_version = '.'.join(server_version)
-            metrics_info = retrieve_info(f'http://{server_address}:{server_restapi_port}/v1/api/metrics', palserver_folder, 'metrics_info.json')
-            if metrics_info:
-                current_players = metrics_info.get('currentplayernum', '')
-                server_fps = metrics_info.get('serverfps', '')
-                uptime = check_uptime(executable_name) 
-                memory_usage = check_memory_usage(palserver_exe) 
-                log(f"[{server_version}][PID: {process_id}][FPS: {server_fps}][Players: {current_players}][{uptime}][MEM: {memory_usage}]")
-            else:
-                log("Metrics info retrieval failed.") 
-            retrieve_server_player(server_address, server_restapi_port, admin_password, temp_file, online_file, log)
-            chat_logger(target_path)
-            perform_backup(backup_folder, saved_folder, log, send_server_announcement)
-            delete_old_files()
-            check_memory_usage(palserver_exe) 
-            check_uptime(palserver_exe)
-            check_timer_scheduled()
-            process_id = get_process_id(executable_name)
-            execute_rcon_command(f"reloadcfg")
-            execute_rcon_command(f"save")
-            #save_server()
-            check_save_size()         
-            check_update()
+    executable_name = os.path.basename(palserver_exe)
+    process_id = get_process_id(executable_name)        
+    if not process_id:
+        log("Target process not running.")
+        return
+    server_info = retrieve_info(f'http://{server_address}:{server_restapi_port}/v1/api/info', palserver_folder, 'server_info.json')
+    if server_info:
+        global server_version
+        server_version = server_info.get('version', '')
+        server_version = server_version.split('.')[0:3]
+        server_version = '.'.join(server_version)
+        metrics_info = retrieve_info(f'http://{server_address}:{server_restapi_port}/v1/api/metrics', palserver_folder, 'metrics_info.json')
+        if metrics_info:
+            current_players = metrics_info.get('currentplayernum', '')
+            server_fps = metrics_info.get('serverfps', '')
+            uptime = check_uptime(executable_name) 
+            memory_usage = check_memory_usage(palserver_exe) 
+            log(f"[{server_version}][PID: {process_id}][FPS: {server_fps}][Players: {current_players}][{uptime}][MEM: {memory_usage}]")
         else:
-            pass        
-    except Exception as e:
-        log(f"Error: Exception in retrieve_server_status. Exception: {e}")
+            log("Metrics info retrieval failed.") 
+        retrieve_server_player(server_address, server_restapi_port, admin_password, temp_file, online_file, log)
+        chat_logger(target_path)
+        perform_backup(backup_folder, saved_folder, log, send_server_announcement)
+        delete_old_files()
+        check_memory_usage(palserver_exe) 
+        check_uptime(palserver_exe)
+        check_timer_scheduled()
+        process_id = get_process_id(executable_name)
+        execute_rcon_command(f"reloadcfg")
+        execute_rcon_command(f"save")
+        #save_server()            
+    check_save_size()
+    check_update()  
 def check_save_size():
     save_last_minute = globals().get("save_last_minute")    
     server_folder_name = get_server_folder_name(server_file, log)
