@@ -25,33 +25,32 @@ def check_powershell():
     except subprocess.CalledProcessError:
         log(f"Failed to install PowerShell 7. Please install it manually from {url_windows}.")
         return False
-_PALGUARD_LATEST_URL = "https://github.com/Ultimeit/palguard/releases/latest/download"
-def check_and_install_palguard(palserver_folder, target_path, palguard_enabled, log):
-    log("Checking PalGuard...")    
-    if not palguard_enabled:
-        log("PalGuard is disabled. Skipping installation.")
+_PALDEFENDER_LATEST_URL = "https://www.dropbox.com/scl/fi/xfmqdv4rsha2ee73opx5l/PalDefender.zip?rlkey=i9y15rzlgxou3i1i0wrjzdvkk&st=94yyyyar&dl=1"
+def check_and_install_paldefender(palserver_folder, target_path, paldefender_enabled, log):
+    log("Checking PalDefender...")
+    if not paldefender_enabled:
+        log("PalDefender is disabled. Skipping installation.")
         return
-    log("Installing PalGuard...")
-    palguard_version_dll = os.path.join(target_path, "version.dll")
-    palguard_palguard_dll = os.path.join(target_path, "PalGuard.dll")
+    log("Installing PalDefender...")
+    paldefender_zip = os.path.join(target_path, "PalDefender.zip")
     try:
-        log("Downloading version.dll...")
-        response = requests.get(_PALGUARD_LATEST_URL + "/version.dll", stream=True)
+        log("Downloading PalDefender.zip...")
+        response = requests.get(_PALDEFENDER_LATEST_URL, stream=True)
         response.raise_for_status()
-        with open(palguard_version_dll, 'wb') as f:
+        with open(paldefender_zip, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-        log(f"Downloaded version.dll to '{palguard_version_dll}'")
-        log("Downloading PalGuard.dll...")
-        response = requests.get(_PALGUARD_LATEST_URL + "/PalGuard.dll", stream=True)
-        response.raise_for_status()
-        with open(palguard_palguard_dll, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        log(f"Downloaded PalGuard.dll to '{palguard_palguard_dll}'")
-        log("PalGuard installation completed.")
+        log(f"Downloaded PalDefender.zip to '{paldefender_zip}'")
+        log("Extracting PalDefender.zip...")
+        with zipfile.ZipFile(paldefender_zip, 'r') as zip_ref:
+            zip_ref.extractall(target_path)
+        log(f"Extracted PalDefender to '{target_path}'")
+        os.remove(paldefender_zip)
+        log("PalDefender installation completed.")
     except requests.exceptions.RequestException as e:
-        log(f"Error downloading PalGuard files: {e}")
+        log(f"Error downloading PalDefender.zip: {e}")
+    except zipfile.BadZipFile:
+        log("Error: PalDefender.zip is corrupted.")
 def install_mods():
     log("Checking mods...")
     if mods_enabled == 0:

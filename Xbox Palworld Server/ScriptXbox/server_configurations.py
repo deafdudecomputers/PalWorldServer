@@ -50,7 +50,7 @@ palserver_exe_regular = os.path.join(target_path, "PalServer-Win64-Shipping.exe"
 palserver_exe_original = os.path.join(palserver_folder, "PalServer.exe") #Do NOT touch this, leave as is.
 palserver_exe = palserver_exe_regular #Do NOT touch this, leave as is.
 palserver_exes = [palserver_exe_cmd, palserver_exe_regular, palserver_exe_original] #Do NOT touch this, leave as is.
-palguard_json = os.path.join(target_path, "PalGuard", "PalGuard.json") #Do NOT touch this, leave as is.
+paldefender_json = os.path.join(target_path, "PalDefender", "Config.json") #Do NOT touch this, leave as is.
 server_update_enable = 1 #Set to 1 if you want it to update, otherwise set to 0 if you want to disable the updates.
 server_update_manifest = 0 #Set to 1 if you want it to update to certain version(manifest), otherwise set to 0 if you want to disable the updates.
 reboot_hour = 7 #Set by your time via 24 hour format. Up to 23. 7 = 7am. 
@@ -62,7 +62,7 @@ def get_public_ip():
 get_public_ip()
 add_ips = [get_public_ip(), "127.0.0.1"]
 remove_ips = []  
-def update_palguard_json():
+def update_paldefender_json():    
     updates = {
         "adminAutoLogin": True,
         "allowAdminCheats": True,
@@ -74,14 +74,14 @@ def update_palguard_json():
         "bannedMessage": "You've been banned.",
         "announcePunishments": True,
         "disableIllegalItemProtection": False,
-        "doActionUponIllegalPalStats" : False,
+        "doActionUponIllegalPalStats": False,
         "whitelistMessage": f"You need to whitelist at ."
     }
-    if os.path.exists(palguard_json):
-        with open(palguard_json, 'r') as file:
+    if os.path.exists(paldefender_json):
+        with open(paldefender_json, 'r') as file:
             data = json.load(file)
     else:
-        log(f"Palguard json at: {palguard_json} does not exist.")
+        log(f"PalDefender json at: {paldefender_json} does not exist.")
         return
     data.update(updates)
     if 'adminIPs' not in data:
@@ -92,9 +92,9 @@ def update_palguard_json():
                 data['adminIPs'].append(ip)
     if remove_ips:
         data['adminIPs'] = [ip for ip in data['adminIPs'] if ip not in remove_ips]
-    with open(palguard_json, 'w') as file:
-        json.dump(data, file, indent=4)    
-    log(f"Successfully updated palguard json at {palguard_json}.")
+    with open(paldefender_json, 'w') as file:
+        json.dump(data, file, indent=4)
+    log(f"Successfully updated PalDefender json at {paldefender_json}.")
 def update_engine_file():
     log("Updating the engine file, please wait...")
     search_replace_pairs = {
