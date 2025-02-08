@@ -216,12 +216,13 @@ def retrieve_server_player(server_address, server_restapi_port, admin_password, 
             with open(file_path, 'r', encoding='utf-8') as file:
                 data = json.load(file)
                 for player in data.get('players', []):
-                    name = player.get('name', '')
-                    user_id = player.get('userId', '')
-                    player_id = player.get('playerId', '')
-                    level = player.get('level', '')
-                    ip = player.get('ip', '')
-                    player_info[name] = (user_id, player_id, level, ip)
+                    name = player.get('name', '').strip()
+                    player_id = player.get('playerId')
+                    if name and player_id and player_id != "None":
+                        user_id = player.get('userId', '')
+                        level = player.get('level', '')
+                        ip = player.get('ip', '')
+                        player_info[name] = (user_id, player_id, level, ip)
         except (json.JSONDecodeError, KeyError) as e:
             log(f"Error: Failed to parse player list. Exception: {e}")
         return player_info
@@ -233,14 +234,12 @@ def retrieve_server_player(server_address, server_restapi_port, admin_password, 
         user_id, player_id, level, ip = temp_info[player]
         message = f"{player} ({user_id}) ({player_id}) ({ip}) has joined the server."
         log(message)
-        message = f"{player} has joined the server."
-        send_server_announcement(message)
+        send_server_announcement(f"{player} has joined the server.")
     for player in left_players:
         user_id, player_id, level, ip = player_info[player]
         message = f"{player} ({user_id}) ({player_id}) ({ip}) has left the server."
         log(message)
-        message = f"{player} has left the server."
-        send_server_announcement(message)
+        send_server_announcement(f"{player} has left the server.")
     os.replace(temp_file, online_file)
 def send_server_announcement(message):
     if disable_announcements == 1: return
@@ -303,15 +302,12 @@ def check_timer_scheduled():
     if not restart_initiated:
         hours_remaining = (int(reboot_hour) - int(current_hour)) % 24
         if current_hour == str(reboot_hour).zfill(2) and current_minute == "00":
-            log("Server is restarting now...")
-            send_server_shutdown()
             restart_initiated = True
             reset_announcements()
+            log("Server is restarting now...")
+            send_server_announcement("Server is restarting now...")
+            send_server_shutdown()
             return
-        if current_hour == str(reboot_hour - 1).zfill(2) and current_minute == "00" and not defined_announcement(f"announcement_{reboot_hour - 1}_hour"):
-            send_server_announcement(f"Server restarting in {hours_remaining} hour(s)...")
-            log(f"Server restarting in {hours_remaining} hour(s)...")
-            set_announcement(f"announcement_{reboot_hour - 1}_hour")
 def defined_announcement(announcement_key):
     return announcement_flags.get(announcement_key, False)
 def set_announcement(announcement_key):
