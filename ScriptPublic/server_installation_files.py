@@ -1,4 +1,3 @@
-from server_utils import *
 from server_configurations import *
 def check_powershell():
     log("Checking PowerShell...")

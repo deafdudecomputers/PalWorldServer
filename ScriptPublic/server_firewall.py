@@ -1,8 +1,4 @@
-import sys, os
-script_shared_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'ScriptShared'))
-sys.path.append(script_shared_path)
 from server_configurations import *
-from server_utils import *
 def get_device_ip():
     return socket.gethostbyname(socket.gethostname())
 def get_router_ip():
@@ -29,10 +25,6 @@ def update_firewall_rules(enable_custom_server_address, custom_server_address, s
     public_ip = get_public_ip()
     log(f"Public's IP is: {public_ip}")
     default_public_ip = public_ip
-    if enable_custom_server_address:
-        public_ip = custom_server_address
-        log(f"Public's IP has been updated to: {public_ip}")
-        check_cloudflare(default_public_ip)
     rules = [
         (f"Palworld Server Query Port {server_query_port}", "udp", server_query_port),
         (f"Palworld Server Port {server_port}", "udp", server_port),
@@ -50,30 +42,4 @@ def update_firewall_rules(enable_custom_server_address, custom_server_address, s
                 add_firewall_rule(rule_name, protocol, target)
         else:
             log(f"Firewall rule {rule_name} already exists.")
-    log("Firewall checks completed.")    
-def check_cloudflare(public_ip):
-    api_token = ""
-    zone_id = ""
-    record_id = ""
-    record_name = ""
-    log(f"Updating the DNS record {record_name}...")
-    url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record_id}"
-    headers = {
-        "Authorization": f"Bearer {api_token}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "type": "A",
-        "name": record_name,
-        "content": public_ip,
-        "ttl": 1,
-        "proxied": False
-    }
-    try:
-        response = requests.put(url, headers=headers, json=data)
-        if response.status_code == 200 and response.json().get("success"):
-            log(f"DNS record {record_name} updated successfully.")
-        else:
-            log(f"Failed to update DNS record {record_name}.")
-    except Exception as e:
-        log(f"Exception occurred: {e}")
+    log("Firewall checks completed.")

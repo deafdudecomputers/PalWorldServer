@@ -1,4 +1,3 @@
-from server_utils import *
 from server_configurations import *
 def retrieve_server_status():
     executable_name = os.path.basename(palserver_exe)
