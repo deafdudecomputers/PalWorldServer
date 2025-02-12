@@ -83,8 +83,7 @@ def watchdog():
                         monitor_stop_event.clear()
                         monitor_thread = None
                     time.sleep(2)
-                    monitor_thread = threading.Thread(target=monitor_server, daemon=True)
-                    monitor_thread.start()
+                    if os.path.exists(heartbeat_file): os.remove(heartbeat_file)
             else:
                 log("Heartbeat file missing. Starting monitor server...")
                 if monitor_thread is None:
