@@ -75,24 +75,23 @@ def watchdog():
                 with open(heartbeat_file, "r") as f:
                     last_heartbeat = float(f.read())
                 if time.time() - last_heartbeat > 30:
-                    log("Monitor server unresponsive. Restarting monitor...")
-                    if monitor_thread and monitor_thread.is_alive():
+                    log("Monitor server unresponsive. Restarting monitor...")                    
+                    if monitor_thread:
                         log("Shutting down old monitor thread...")
                         monitor_stop_event.set()
                         monitor_thread.join(timeout=10)
-                        if monitor_thread.is_alive():
-                            log("Monitor thread did not exit! Forcing restart...")
                         monitor_stop_event.clear()
                         monitor_thread = None
-                    if monitor_thread is None:
-                        monitor_thread = threading.Thread(target=monitor_server, daemon=True)
-                        monitor_thread.start()
+                    time.sleep(2)
+                    monitor_thread = threading.Thread(target=monitor_server, daemon=True)
+                    monitor_thread.start()
             else:
                 log("Heartbeat file missing. Starting monitor server...")
                 if monitor_thread is None:
                     monitor_thread = threading.Thread(target=monitor_server, daemon=True)
                     monitor_thread.start()
-        except Exception as e: log(f"Error in watchdog: {e}")
+        except Exception as e:
+            log(f"Error in watchdog: {e}")
         time.sleep(10)
 def main():
     if os.path.exists(heartbeat_file): os.remove(heartbeat_file)
